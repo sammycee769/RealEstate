@@ -12,7 +12,7 @@ import com.sammyCee.dtos.responses.GenerateEntryCodeResponse;
 import com.sammyCee.dtos.responses.GenerateExitCodeResponse;
 import com.sammyCee.dtos.responses.GenerateVisitorEntryCodeResponse;
 import com.sammyCee.dtos.responses.ValidateCodeResponse;
-import com.sammyCee.exceptions.GatePassDoesNotExist;
+import com.sammyCee.exceptions.GatePassDoesNotExistException;
 import com.sammyCee.exceptions.ResidentManagementServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -66,7 +66,9 @@ public class GateAccessService {
     public ValidateCodeResponse validateCode(ValidateCodeRequest validateCodeRequest){
         GatePass existing = gatePassRepo.findByCode(validateCodeRequest.getCode());
         if(existing == null){
-            throw new GatePassDoesNotExist("Invalid Gate Pass Code");
+            throw new GatePassDoesNotExistException("Invalid Gate Pass Code");
+        }    if(!existing.isValid()){
+            throw new GatePassDoesNotExistException("Gate Pass has expired");
         }
         confirmCode(validateCodeRequest, existing);
         existing.setActivate(true);
@@ -85,10 +87,10 @@ public class GateAccessService {
 
     private static void confirmCode(ValidateCodeRequest validateCodeRequest, GatePass existing) {
         if (!existing.getCode().equals(validateCodeRequest.getCode()) || !existing.getPassType().toString().equals(validateCodeRequest.getCodeType())){
-            throw new GatePassDoesNotExist("Invalid Gate Pass Code");
+            throw new GatePassDoesNotExistException("Invalid Gate Pass Code");
         }
         if(existing.isActivate())
-            throw new GatePassDoesNotExist("Code Already Used");
+            throw new GatePassDoesNotExistException("Code Already Used");
 
     }
 
@@ -112,12 +114,11 @@ public class GateAccessService {
 
         return code.toString();
     }
+
+
     private GatePass validateGatePass(String gatePassId) {
-        GatePass existing = gatePassRepo.findById(gatePassId).get();
-        if(existing == null){
-            throw new GatePassDoesNotExist("Gate pass not found");
-        }
-        return existing;
+        return gatePassRepo.findById(gatePassId)
+                .orElseThrow(() -> new GatePassDoesNotExistException("Gate pass not found"));
     }
 
     private Resident validateResident(String phoneNumber) {

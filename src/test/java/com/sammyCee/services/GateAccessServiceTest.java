@@ -1,31 +1,34 @@
 package com.sammyCee.services;
 
+import com.sammyCee.data.models.GatePass;
 import com.sammyCee.data.repositories.GatePassRepo;
 import com.sammyCee.data.repositories.ResidentRepo;
 import com.sammyCee.dtos.requests.*;
 import com.sammyCee.dtos.responses.*;
-import com.sammyCee.exceptions.GatePassDoesNotExist;
+import com.sammyCee.exceptions.GatePassDoesNotExistException;
 import com.sammyCee.exceptions.ResidentManagementServiceException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.LocalTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SpringBootTest
 class GateAccessServiceTest {
-
+    @Autowired
     private GateAccessService gateAccessService;
+    @Autowired
     private ResidentManagementService residentService;
+    @Autowired
     private ResidentRepo residentRepo;
+    @Autowired
     private GatePassRepo gatePassRepo;
 
     @BeforeEach
     public void setUp() {
-        gateAccessService = new GateAccessService();
-        residentService = new ResidentManagementService();
-        residentRepo = new Residents();
-        gatePassRepo = new GatePasses();
         residentRepo.deleteAll();
         gatePassRepo.deleteAll();
     }
@@ -156,7 +159,7 @@ class GateAccessServiceTest {
         request.setCode("WRONG1");
         request.setCodeType("ENTRY");
 
-        assertThrows(GatePassDoesNotExist.class,
+        assertThrows(GatePassDoesNotExistException.class,
                 () -> gateAccessService.validateCode(request));
     }
 
@@ -169,7 +172,7 @@ class GateAccessServiceTest {
         request.setCode(entryResponse.getCode());
         request.setCodeType("EXIT");
 
-        assertThrows(GatePassDoesNotExist.class,
+        assertThrows(GatePassDoesNotExistException.class,
                 () -> gateAccessService.validateCode(request));
     }
 
@@ -184,7 +187,7 @@ class GateAccessServiceTest {
 
         gateAccessService.validateCode(request);
 
-        assertThrows(GatePassDoesNotExist.class,
+        assertThrows(GatePassDoesNotExistException.class,
                 () -> gateAccessService.validateCode(request));
     }
 
@@ -237,7 +240,7 @@ class GateAccessServiceTest {
     void disableCode_gatePassDoesNotExist_exceptionThrown() {
         registerResident("name", "email", "phoneNumber", "houseAddress");
 
-        assertThrows(GatePassDoesNotExist.class,
+        assertThrows(GatePassDoesNotExistException.class,
                 () -> gateAccessService.disableCode("phoneNumber", "unknownPassId"));
     }
 
@@ -249,13 +252,16 @@ class GateAccessServiceTest {
 
         gateAccessService.disableCode("phoneNumber", gatePassId);
 
-        assertFalse(gatePassRepo.findById(gatePassId).isValid());
+        GatePass gatePass = gatePassRepo.findById(gatePassId)
+                .orElseThrow(() -> new AssertionError("GatePass not found"));
+
+        assertFalse(gatePass.isValid());
     }
 
 
     @Test
     void extendTime_gatePassDoesNotExist_exceptionThrown() {
-        assertThrows(GatePassDoesNotExist.class,
+        assertThrows(GatePassDoesNotExistException.class,
                 () -> gateAccessService.extendTime(30, "unknownPassId"));
     }
 
@@ -267,9 +273,15 @@ class GateAccessServiceTest {
 
         gateAccessService.disableCode("phoneNumber", gatePassId);
 
-        LocalTime validTillBefore = gatePassRepo.findById(gatePassId).getValidTill();
+        GatePass gatePassBefore = gatePassRepo.findById(gatePassId)
+                .orElseThrow(() -> new AssertionError("GatePass not found"));
+        LocalTime validTillBefore = gatePassBefore.getValidTill();
+
         gateAccessService.extendTime(30, gatePassId);
-        LocalTime validTillAfter = gatePassRepo.findById(gatePassId).getValidTill();
+
+        GatePass gatePassAfter = gatePassRepo.findById(gatePassId)
+                .orElseThrow(() -> new AssertionError("GatePass not found"));
+        LocalTime validTillAfter = gatePassAfter.getValidTill();
 
         assertEquals(validTillBefore, validTillAfter);
     }
@@ -280,11 +292,15 @@ class GateAccessServiceTest {
         GenerateEntryCodeResponse entryResponse = generateEntryCode("phoneNumber", LocalTime.now().plusHours(1));
         String gatePassId = gatePassRepo.findByCode(entryResponse.getCode()).getId();
 
-        LocalTime validTillBefore = gatePassRepo.findById(gatePassId).getValidTill();
+        GatePass gatePassBefore = gatePassRepo.findById(gatePassId)
+                .orElseThrow(() -> new AssertionError("GatePass not found"));
+        LocalTime validTillBefore = gatePassBefore.getValidTill();
 
         gateAccessService.extendTime(30, gatePassId);
 
-        LocalTime validTillAfter = gatePassRepo.findById(gatePassId).getValidTill();
+        GatePass gatePassAfter = gatePassRepo.findById(gatePassId)
+                .orElseThrow(() -> new AssertionError("GatePass not found"));
+        LocalTime validTillAfter = gatePassAfter.getValidTill();
         assertEquals(validTillBefore.plusMinutes(30), validTillAfter);
     }
 
@@ -295,7 +311,7 @@ class GateAccessServiceTest {
         request.setGatePassId("unknownPassId");
         request.setValidTill(LocalTime.now().plusHours(1));
 
-        assertThrows(GatePassDoesNotExist.class,
+        assertThrows(GatePassDoesNotExistException.class,
                 () -> gateAccessService.generateExtCode(request));
     }
 

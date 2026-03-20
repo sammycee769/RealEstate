@@ -4,14 +4,17 @@ import com.sammyCee.data.models.Resident;
 import com.sammyCee.data.repositories.ResidentRepo;
 import com.sammyCee.dtos.requests.OnboardResidentRequest;
 import com.sammyCee.dtos.responses.OnboardResidentResponse;
+import com.sammyCee.dtos.responses.ViewResidentResponse;
 import com.sammyCee.exceptions.ResidentManagementServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.sammyCee.utils.Mapper.map;
+import static com.sammyCee.utils.Mapper.mapViewResident;
 
 @Service
 public class ResidentManagementService {
@@ -21,17 +24,22 @@ public class ResidentManagementService {
     public OnboardResidentResponse onboardResidents(OnboardResidentRequest onboardResidentRequest) {
         validateResidentDuplicates(onboardResidentRequest.getPhoneNumber(),onboardResidentRequest.getEmail());
         Resident resident= map(onboardResidentRequest);
-        residentRepo.save(resident);
         resident.setEnabled(true);
+        residentRepo.save(resident);
 
         return  map(resident);
     }
     public void disableResident(String phoneNumber){
         Resident resident = validateResidentExists(phoneNumber);
         resident.setEnabled(false);
+        residentRepo.save(resident);
     }
-    public List<Resident> viewAllResidents() {
-        return residentRepo.findAll();
+    public List<ViewResidentResponse> viewAllResidents() {
+        List<ViewResidentResponse> viewResidentResponses = new ArrayList<>();
+        for (Resident resident : residentRepo.findAll()) {
+            viewResidentResponses.add(mapViewResident(resident));
+        }
+        return viewResidentResponses;
     }
     public  void deleteResident(String phoneNumber) {
         Resident resident= validateResidentExists(phoneNumber);

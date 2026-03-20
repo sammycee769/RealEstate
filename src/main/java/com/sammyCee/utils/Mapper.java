@@ -3,13 +3,17 @@ package com.sammyCee.utils;
 import com.sammyCee.data.models.GatePass;
 import com.sammyCee.data.models.Pass;
 import com.sammyCee.data.models.Resident;
+import com.sammyCee.data.repositories.ResidentRepo;
 import com.sammyCee.dtos.requests.GenerateEntryCodeRequest;
 import com.sammyCee.dtos.requests.GenerateExitCodeRequest;
 import com.sammyCee.dtos.requests.GenerateVisitorEntryCodeRequest;
 import com.sammyCee.dtos.requests.OnboardResidentRequest;
 import com.sammyCee.dtos.responses.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Mapper {
     public static Resident map(OnboardResidentRequest onboardResidentRequest) {
@@ -92,6 +96,14 @@ public class Mapper {
         return generateExitCodeResponse;
     }
 
-
+    public static ViewResidentResponse mapViewResident(Resident resident) {
+        ViewResidentResponse residentResponse = new ViewResidentResponse();
+        residentResponse.setName(resident.getName());
+        residentResponse.setPhoneNumber(resident.getPhoneNumber());
+        residentResponse.setHouseAddress(resident.getHouseAddress());
+        residentResponse.setEmail(resident.getEmail());
+        residentResponse.setEnabled(resident.isEnabled());
+        return residentResponse;
+    }
 
 }

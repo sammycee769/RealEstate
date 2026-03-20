@@ -5,25 +5,28 @@ import com.sammyCee.dtos.requests.OnboardResidentRequest;
 import com.sammyCee.exceptions.ResidentManagementServiceException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.junit.jupiter.api.Assertions.*;
-
+@SpringBootTest
 class ResidentManagementServiceExceptionTest {
+    @Autowired
     private ResidentManagementService residentService;
+    @Autowired
     private ResidentRepo residentRepo;
+
     private OnboardResidentRequest onboardResidentRequest;
 
     @BeforeEach
     public void setUp(){
-        residentService = new ResidentManagementService();
-        residentRepo = new Residents();
         residentRepo.deleteAll();
         onboardResidentRequest = new OnboardResidentRequest();
     }
 
     @Test
     public void RegisterResident_ResidentsCountIsOne(){
-        assertEquals(0, residentRepo.getTotal());
+        assertEquals(0, residentRepo.count());
 
         onboardResidentRequest.setName("name");
         onboardResidentRequest.setEmail("email");
@@ -32,7 +35,7 @@ class ResidentManagementServiceExceptionTest {
 
         residentService.onboardResidents(onboardResidentRequest);
 
-        assertEquals(1, residentRepo.getTotal());
+        assertEquals(1, residentRepo.count());
     }
 
     @Test
@@ -53,7 +56,7 @@ class ResidentManagementServiceExceptionTest {
         assertThrows(ResidentManagementServiceException.class,
                 () -> residentService.onboardResidents(onboardResidentRequest2));
 
-        assertEquals(1, residentRepo.getTotal());
+        assertEquals(1, residentRepo.count());
     }
 
     @Test
@@ -74,7 +77,7 @@ class ResidentManagementServiceExceptionTest {
         assertThrows(ResidentManagementServiceException.class,
                 () -> residentService.onboardResidents(onboardResidentRequest2));
 
-        assertEquals(1, residentRepo.getTotal());
+        assertEquals(1, residentRepo.count());
     }
 
     @Test
@@ -135,11 +138,11 @@ class ResidentManagementServiceExceptionTest {
 
         residentService.onboardResidents(onboardResidentRequest);
 
-        assertEquals(1, residentRepo.getTotal());
+        assertEquals(1, residentRepo.count());
 
         residentService.deleteResident("phoneNumber");
 
-        assertEquals(0, residentRepo.getTotal());
+        assertEquals(0, residentRepo.count());
     }
     @Test
     void disableResident_residentDoesNotExist_exceptionThrown(){
