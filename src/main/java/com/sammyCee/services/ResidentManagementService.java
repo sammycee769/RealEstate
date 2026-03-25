@@ -34,6 +34,15 @@ public class ResidentManagementService {
         resident.setEnabled(false);
         residentRepo.save(resident);
     }
+    public void enableResident(String phoneNumber){
+        Resident resident = validateResidentExists(phoneNumber);
+        validateIsEnabled(resident);
+        resident.setEnabled(true);
+        residentRepo.save(resident);
+    }
+
+
+
     public List<ViewResidentResponse> viewAllResidents() {
         List<ViewResidentResponse> viewResidentResponses = new ArrayList<>();
         for (Resident resident : residentRepo.findAll()) {
@@ -45,6 +54,13 @@ public class ResidentManagementService {
         Resident resident= validateResidentExists(phoneNumber);
         residentRepo.delete(resident);
     }
+
+    private static void validateIsEnabled(Resident resident) {
+        if(resident.isEnabled()){
+            throw new ResidentManagementServiceException("Resident is enabled");
+        }
+    }
+
     private Resident validateResidentExists(String phoneNumber ){
         Resident existing = residentRepo.findByPhoneNumber(phoneNumber);
         if(existing == null){

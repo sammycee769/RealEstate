@@ -29,11 +29,21 @@ public class EstateManagerControllers {
         }
     }
 
-    @PatchMapping("/residents/disable-resident")
-    public ResponseEntity<ApiResponse> disableResident(@RequestBody String phoneNumber){
+    @PatchMapping("/residents/disable-resident/{residentId}")
+    public ResponseEntity<ApiResponse> disableResident( @PathVariable String phoneNumber){
         try{
             residentManagementService.disableResident(phoneNumber.trim());
             return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Resident disabled successfully", null));
+        }catch (ResidentManagementServiceException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(false,e.getMessage(),null));
+        }
+    }
+
+    @PatchMapping("/residents/enable-resident/{residentId}")
+    public ResponseEntity<ApiResponse> enableResident(@PathVariable String phoneNumber){
+        try{
+            residentManagementService.enableResident(phoneNumber.trim());
+            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Resident enabled successfully", null));
         }catch (ResidentManagementServiceException e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(false,e.getMessage(),null));
         }
